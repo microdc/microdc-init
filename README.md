@@ -1,2 +1,6 @@
 # ee-microdc-init
-A pick 'n' mix Kubernetes infrastructure
+A python package to manage a pick 'n' mix Kubernetes infrastructure
+
+### Tests
+`$ ./tests.sh`
+
