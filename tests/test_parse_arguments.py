@@ -16,6 +16,9 @@ class TestParseArguments(unittest.TestCase):
         """
         If valid options are given then we expect a valid arguments object
         """
-        result = parse_args(['--config', '../dir/file.yaml', '--account', 'nonprod'])
+        result = parse_args(['--config',
+                             '../dir/file.yaml',
+                             '--account',
+                             'nonprod'])
         self.assertEquals(result.config[0], '../dir/file.yaml')
         self.assertEquals(result.account[0], 'nonprod')

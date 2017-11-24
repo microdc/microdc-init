@@ -5,8 +5,8 @@ def parse_args(argv):
     """
     Parse all command line arguments and return a dict
     """
-    parser = argparse.ArgumentParser(description='''Generate shell commands
-                                     from a yaml config file to setup MicroDC.''')
+    parser = argparse.ArgumentParser(description='''Generate shell commands from
+                                     a yaml config file to setup MicroDC.''')
     parser.add_argument('--config',
                         metavar='CONFIG',
                         nargs=1,
