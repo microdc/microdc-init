@@ -21,6 +21,6 @@ echo "Running tests..."
 python -m pytest tests/
 
 echo "Running flake8..."
-flake8 ee-microdc-init/ tests/
+flake8 microdc/ tests/
 
 echo "Done!!"
