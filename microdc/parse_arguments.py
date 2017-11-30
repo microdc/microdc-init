@@ -23,6 +23,10 @@ def parse_args(argv):
                           nargs=1,
                           required=2,
                           help='Which stack to apply')
+    required.add_argument('--tool',
+                          metavar='TOOL',
+                          default='all',
+                          help='Which tool to use')
     parser.add_argument('--account',
                         metavar='ACCOUNT',
                         nargs=1,
