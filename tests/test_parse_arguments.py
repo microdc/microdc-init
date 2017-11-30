@@ -22,5 +22,5 @@ class TestParseArguments(unittest.TestCase):
                              '--env', 'dev',
                              '--stack', 'application',
                              'up'])
-        self.assertEquals(result.config[0], '../dir/file.yaml')
-        self.assertEquals(result.account[0], 'nonprod')
+        self.assertEquals(result.config, '../dir/file.yaml')
+        self.assertEquals(result.account, 'nonprod')
