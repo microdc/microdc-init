@@ -1,4 +1,20 @@
 import argparse
+import os
+import sys
+from datetime import datetime
+
+
+def check_date_file(datefile):
+    try:
+        with open(datefile, 'r') as file:
+            date = file.readline().strip()
+        file.close()
+        datetime.strptime(date, '%d %b %Y %H:%M')
+        return True
+    except ValueError:
+        raise ValueError("Date in {} is wrong".format(datefile))
+    except FileNotFoundError:
+        return False
 
 
 def parse_args(argv):
@@ -20,16 +36,42 @@ def parse_args(argv):
                           metavar='STACK',
                           required=2,
                           help='Which stack to apply')
-    required.add_argument('--tool',
-                          metavar='TOOL',
-                          default='all',
-                          help='Which tool to use')
+    parser.add_argument('--tool',
+                        metavar='TOOL',
+                        default='all',
+                        help='Which tool to use')
     parser.add_argument('--account',
                         metavar='ACCOUNT',
                         default='default',
                         help='Set the AWS account to use')
+    parser.add_argument('--bootstrap',
+                        action='store_true',
+                        help='Run bootsrap steps')
+    parser.add_argument('--datefile',
+                        metavar='DATEFILE',
+                        default='.datefile',
+                        help='The datefile is used to check fi the setup process has been run.\
+                              Defaults to .datefile in the workdir.')
+    parser.add_argument('--setup',
+                        action='store_true',
+                        help='Download MicroDC components')
+    parser.add_argument('--overwrite',
+                        action='store_true',
+                        help='Overwrite the various MicroDC component repos when using --setup')
+    parser.add_argument('--workdir',
+                        metavar='WORKDIR',
+                        default=os.environ.get('WORKDIR',
+                                               os.environ.get('HOME') + '/MicroDC'),
+                        help='MicroDC working folder ~/.microdc')
     parser.add_argument('action',
                         metavar='ACTION',
                         help='Action to perform: up or dowm')
 
-    return parser.parse_args(argv)
+    arguments = parser.parse_args(argv)
+    if not check_date_file("{}/{}".format(arguments.workdir, arguments.datefile)):
+        if not arguments.setup:
+            parser.print_help()
+            print("\nERR please run with --setup\n")
+            sys.exit(2)
+
+    return arguments

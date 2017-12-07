@@ -28,7 +28,7 @@ accounts:
         stack: service
 
 
-stacks:
+component_repos:
   terraform:
     git: git@github.com:EqualExperts/ee-microdc-terraform-stack.git
     ref: master

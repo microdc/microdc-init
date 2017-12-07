@@ -2,6 +2,15 @@ import yaml
 from collections import OrderedDict
 
 
+def check_config(expected_items, configyaml):
+    for item in expected_items:
+        if item not in configyaml:
+            print('\nERR: \'{}\' missing from config\n'.format(item))
+            return False
+
+    return True
+
+
 def readyaml(filename):
     try:
         file = open(filename)

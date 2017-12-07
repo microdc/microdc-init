@@ -1,38 +1,47 @@
+from microdc.template_parser import parsetemplate, readtemplate
+from microdc.networking import generate_subnets
+
+
+def setup_microdc_workarea(workdir, component_repos, datefile, overwrite=False):
+
+    def create_root_folder(root_folder):
+        print(("mkdir -p {}\n".format(root_folder)))
+
+    def get_repos(repo_folder, repos):
+        print(("mkdir -p {}\n".format(repo_folder)))
+        for key, value in repos.items():
+            if overwrite:
+                print(("rm -rf {}/{}\n".format(repo_folder, key)))
+            print(("[ -e {repo_folder}/{key} ] || \\\n"
+                   "( git clone {value[git]} {repo_folder}/{key} && \\\n"
+                   "  cd {repo_folder}/{key} && \\\n"
+                   "  git checkout {value[ref]} )\n"
+                   .format(key=key, value=value, repo_folder=repo_folder)))
+
+    def stamp_setup_file(datefile):
+        print(("date '+%d %b %Y %H:%M' > {}\n".format(datefile)))
+
+    create_root_folder(workdir)
+    get_repos("{}/repos".format(workdir), component_repos)
+    stamp_setup_file(datefile)
+
+
 def setup_environment(config, options):
-    required_config_values = ['project',
-                              'estate_cidr',
-                              'accounts']
-    for value in required_config_values:
-        if value not in config:
-            raise ValueError("\'{}\' missing from config".format(value))
 
-    required_option_values = ['env',
-                              'account']
-    for value in required_option_values:
-        if value not in options:
-            raise ValueError("\'{}\' missing from options".format(value))
-
-    if not options.account in config['accounts']:
-        raise ValueError("\'{}\' missing from options".format(options.account))
-
-    print(("export PROJECT={0}\n"
-           "export ENVIRONMENT={1}\n"
-           "export ACCOUNT={2}\n"
-           "export CIDR={3}\n"
-           "export AWS_DEFAULT_REGION={4}\n"
-           "export AWS_DEFAULT_PROFILE=\"${{PROJECT}}-${{ACCOUNT}}\"\n"
-           "export CLUSTER=\"${{ENVIRONMENT}}.${{ACCOUNT}}.${{PROJECT}}.k8s.local\"\n"
-           "export KOPS_STATE_STORE=\"s3://${{AWS_DEFAULT_PROFILE}}-kops\"\n"
-    .format(config['project'],
-               options.env,
-               options.account,
-               config['estate_cidr'],
-               config['accounts'][options.account]['region'])))
+    print(("export AWS_DEFAULT_REGION={region}\n"
+           "export AWS_DEFAULT_PROFILE={project}-{account}\n"
+           .format(project=config['project'],
+                   environment=options.env,
+                   account=options.account,
+                   cidr=config['estate_cidr'],
+                   region=config['accounts'][options.account]['region'])))
     return True
+
 
 def run_terraform(config, options):
     print(("export TF_PLUGIN_CACHE_DIR=\"/tmp/terraform.d/plugin-cache\""))
     return True
+
 
 def create_kops_state_bucket(config, options):
     print(("aws s3api create-bucket --bucket ${KOPS_STATE_STORE} \\\n"
