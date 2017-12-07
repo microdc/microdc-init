@@ -4,8 +4,7 @@ from microdc.yaml_loader import readyaml, check_config
 from microdc.output_commands import (setup_environment,
                                      setup_microdc_workarea,
                                      run_terraform,
-                                     create_kops_state_bucket,
-                                     run_kops)
+                                     kops_runner)
 
 
 def main():
@@ -34,8 +33,7 @@ def main():
         run_terraform(config, options)
 
     if options.tool == 'kops':
-        create_kops_state_bucket(config, options)
-        run_kops(config, options)
+        kops_runner(config, options)
 
     return True
 
