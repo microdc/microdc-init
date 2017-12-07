@@ -8,6 +8,8 @@ setup(
     author='Alan Platt - Equal Experts',
     author_email='aplatt@equalexperts.com',
     packages=find_packages(exclude=['contrib', 'docs', 'tests*']),
+    install_requires=['Jinja2==2.10', 'PyYAML==3.12'],
+    include_package_data=True,
     keywords='cli kubernetes terraform aws',
     license='Apache',
     classifiers=[
