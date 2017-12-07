@@ -40,6 +40,37 @@ def setup_environment(config, options):
 
 def run_terraform(config, options):
     print(("export TF_PLUGIN_CACHE_DIR=\"/tmp/terraform.d/plugin-cache\""))
+
+    if options.stack == 'global':
+        stack_dir = "{}/repos/terraform/providers/aws/global-{}".format(options.workdir, options.account)
+        init_vars = ("         -backend-config \"bucket={project}-terraform-global\" \\\n"
+                     "         -backend-config \"dynamodb_table={project}-terraform-lock\"\n"
+                     .format(project=config['project']))
+        run_vars = ("          -var \"domain={domain}\" \\\n"
+                    "          -var \"project={project}\" \\\n"
+                    "          -var \"account={account}\" \\\n"
+                    "          -var \"prod_account_id={prod_account_id}\" \\\n"
+                    "          -var \"nonprod_account_id={nonprod_account_id}\"\n"
+                    .format(project=config['project'],
+                            account=options.account,
+                            domain=config['accounts'][options.account]['domain'],
+                            prod_account_id=config['accounts']['prod']['account_id'],
+                            nonprod_account_id=config['accounts']['nonprod']['account_id']))
+
+    print(("(\n"
+           "cd {stack_dir}\n"
+           "rm -rfv .terraform terraform.tfstate.d\n"
+           "terraform init \\\n"
+           "{init_vars}"
+           "terraform {action} \\\n"
+           "{run_vars}"
+           ")\n"
+           .format(action='destroy -force' if options.action == 'destroy' else options.action,
+                   stack_dir=stack_dir,
+                   init_vars=init_vars,
+                   run_vars=run_vars
+                   )))
+
     return True
 
 
