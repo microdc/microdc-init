@@ -1,0 +1,70 @@
+---
+
+project: testproject
+estate_cidr: 10.10.0.0/16
+
+accounts:
+  nonprod:
+    account_id: 454545454545
+    domain: nonprod.test.com
+    sslcertificate: arn:aws:acm:eu-west-1:454545454545:certificate/45c45eb5-4545-4c45-45dd-d5b9a18d4545
+    region: eu-west-1
+    sshpublickey: ssh-rsa AAAABXXXXXXXXXXXXXXXXXXxxxxxxxxxxxxxxxxxxxXXXXXXXXXYXXXXXXXXXXXXXxxxxxxxxxxxxxxxxxxxxxxXXXXXXXXXXXXXXXXXXXXXxxxxxxxxxxxxxxxxxxxxxxxXXXXXXXXXXXXXXXXXXXXXXXXXXxxxxxxxxxxxxxxxxxxxxxxxXXXXXXXXXXXXXXXXXXXXXXXXxxxxxxxxxxxxxxxxxxxxxxxxxxXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXxxxxxxxxxxxxxxxxxxxxxxxxXXXXXXXXXXXXXXXXXXXXXXXxxxxxxxxxxxxxxxxxxxxxxxxxxxXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXxxxxxxxxxxxxxxxxxxxxxxxxxxxxXXXXXXXXXXXXXXXXXXXXXxxxxxxxxxxxxxxxxx7gNLM/RmAd3nPzJJjCPmJVNWR8HxgVQF98zTn/7Q84iqcZf45pHpQcGmHfEkDFYHd+ww4ebKghauc1EDkBEyQZMcvqmxddzbCVkUaipifLE0uekdtWCf9Vr/e0ZE6S7g2LTGZYXPY1pLVqciWmctEO9M4CAkaVXSRPcvNG6lBz47AhBXR96VTd+fIO6naphTN4DfUPCoxvCmEkWm9hpB6ZnR5RjYNDUCPfJpg3oTtfMMl4iIUsBiHwddV4srUqP+u7sX1gEc4zND1IcaP5N+zhMzufQ==
+    environments:
+      mgmt:
+        stack: mgmt
+      dev:
+        stack: service
+      stage:
+        stack: service
+  prod:
+    account_id: 565656565656
+    domain: prod.test.com
+    sslcertificate: arn:aws:acm:eu-west-1:565656565656:certificate/56c56eb2-5656-4c56-56dd-d5b9a56d5656
+    region: eu-west-1
+    domain: prod.microdc.equalexperts.io
+    environments:
+      prod:
+        stack: service
+
+
+component_repos:
+  terraform:
+    git: git@github.com:EqualExperts/ee-microdc-terraform-stack.git
+    ref: master
+  ansible:
+    git: git@github.com:EqualExperts/ee-microdc-ansible-stack.git
+    ref: master
+  osimage-builder:
+    git: git@github.com:alanplatt/osimage-builder.git
+    ref: master
+
+amis:
+  base-14.04:
+    os_release: trusty-14.04
+    template: templates/ubuntu-base-amd64-ebs.json
+  docker-14.04:
+    os_release: trusty-14.04
+    template: templates/ubuntu-docker-amd64-ebs.json
+  base-16.04:
+    os_release: xenial-16.04
+    template: templates/ubuntu-base-amd64-ebs.json
+  docker-16.04:
+    os_release: xenial-16.04
+    template: templates/ubuntu-docker-amd64-ebs.json
+
+jenkins_jobs:
+  deploy-container:
+    git: git@github.com:Xinja-Money/deploy-container.git
+    ref: master
+
+apps:
+  helloworld:
+    port: 39111
+    expose: internal
+
+jenkins_ui_users:
+  - username: aplatt@equalexperts.com
+    permissions: [ global_admin ]
+  - username: tvanneerijnen@equalexperts.com
+    permissions: [ global_admin ]

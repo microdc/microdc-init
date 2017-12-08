@@ -1,0 +1,186 @@
+apiVersion: kops/v1alpha2
+kind: Cluster
+metadata:
+  creationTimestamp: null
+  name: {{ cluster }}
+spec:
+  api:
+    loadBalancer:
+      type: Public
+  authorization:
+    rbac: {}
+  channel: stable
+  cloudProvider: aws
+  configBase: {{ state_store}}/{{ cluster }}
+  etcdClusters:
+  - etcdMembers:
+    - encryptedVolume: true
+      instanceGroup: master-{{ region }}a
+      name: a
+    - encryptedVolume: true
+      instanceGroup: master-{{ region }}b
+      name: b
+    - encryptedVolume: true
+      instanceGroup: master-{{ region }}c
+      name: c
+    name: main
+  - etcdMembers:
+    - encryptedVolume: true
+      instanceGroup: master-{{ region }}a
+      name: a
+    - encryptedVolume: true
+      instanceGroup: master-{{ region }}b
+      name: b
+    - encryptedVolume: true
+      instanceGroup: master-{{ region }}c
+      name: c
+    name: events
+  iam:
+    allowContainerRegistry: true
+    legacy: false
+  kubernetesApiAccess:
+  - 0.0.0.0/0
+  kubernetesVersion: 1.8.4
+  masterPublicName: api.{{ external_domain }}
+  networkCIDR: {{ network_cidr }}
+  networking:
+    weave:
+      mtu: 8912
+  nonMasqueradeCIDR: 100.64.0.0/10
+  sshAccess:
+  - 0.0.0.0/0
+  subnets:
+  - cidr: {{ subnets_19[0] }}
+    name: {{ region }}a
+    type: Private
+    zone: {{ region }}a
+  - cidr: {{ subnets_19[1] }}
+    name: {{ region }}b
+    type: Private
+    zone: {{ region }}b
+  - cidr: {{ subnets_19[2] }}
+    name: {{ region }}c
+    type: Private
+    zone: {{ region }}c
+  - cidr: {{ subnets_22[0] }}
+    name: utility-{{ region }}a
+    type: Utility
+    zone: {{ region }}a
+  - cidr: {{ subnets_22[1] }}
+    name: utility-{{ region }}b
+    type: Utility
+    zone: {{ region }}b
+  - cidr: {{ subnets_22[2] }}
+    name: utility-{{ region }}c
+    type: Utility
+    zone: {{ region }}c
+  topology:
+    dns:
+      type: Public
+    masters: private
+    nodes: private
+  kubeAPIServer:
+    authorizationRbacSuperUser: admin
+  additionalPolicies:
+    master: |
+      [
+        {
+          "Effect": "Allow",
+          "Action": [
+            "route53:GetHostedZone",
+            "route53:ChangeResourceRecordSets",
+            "route53:ListResourceRecordSets"
+          ],
+          "Resource": ["arn:aws:route53:::hostedzone/*"]
+        }
+      ]
+    node: |
+      [
+        {
+          "Effect": "Allow",
+          "Action": ["sts:AssumeRole"],
+          "Resource": "*"
+        }
+      ]
+
+---
+
+apiVersion: kops/v1alpha2
+kind: InstanceGroup
+metadata:
+  creationTimestamp: null
+  labels:
+    kops.k8s.io/cluster: {{ cluster }}
+  name: master-{{ region }}a
+spec:
+  image: kope.io/k8s-1.8-debian-jessie-amd64-hvm-ebs-2017-12-02
+  machineType: m4.large
+  maxSize: 1
+  minSize: 1
+  nodeLabels:
+    kops.k8s.io/instancegroup: master-{{ region }}a
+  role: Master
+  subnets:
+  - {{ region }}a
+
+---
+
+apiVersion: kops/v1alpha2
+kind: InstanceGroup
+metadata:
+  creationTimestamp: null
+  labels:
+    kops.k8s.io/cluster: {{ cluster }}
+  name: master-{{ region }}b
+spec:
+  image: kope.io/k8s-1.8-debian-jessie-amd64-hvm-ebs-2017-12-02
+  machineType: m4.large
+  maxSize: 1
+  minSize: 1
+  nodeLabels:
+    kops.k8s.io/instancegroup: master-{{ region }}b
+  role: Master
+  subnets:
+  - {{ region }}b
+
+---
+
+apiVersion: kops/v1alpha2
+kind: InstanceGroup
+metadata:
+  creationTimestamp: null
+  labels:
+    kops.k8s.io/cluster: {{ cluster }}
+  name: master-{{ region }}c
+spec:
+  image: kope.io/k8s-1.8-debian-jessie-amd64-hvm-ebs-2017-12-02
+  machineType: m4.large
+  maxSize: 1
+  minSize: 1
+  nodeLabels:
+    kops.k8s.io/instancegroup: master-{{ region }}c
+  role: Master
+  subnets:
+  - {{ region }}c
+
+---
+
+apiVersion: kops/v1alpha2
+kind: InstanceGroup
+metadata:
+  creationTimestamp: null
+  labels:
+    kops.k8s.io/cluster: {{ cluster }}
+  name: nodes
+spec:
+  image: kope.io/k8s-1.8-debian-jessie-amd64-hvm-ebs-2017-12-02
+  machineType: m4.2xlarge
+  maxSize: 3
+  minSize: 3
+  nodeLabels:
+    kops.k8s.io/instancegroup: nodes
+  role: Node
+  subnets:
+  - {{ region }}a
+  - {{ region }}b
+  - {{ region }}c
