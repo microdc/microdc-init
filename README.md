@@ -16,3 +16,11 @@ A python package to manage a pick 'n' mix Kubernetes infrastructure on AWS
 ### Tests
 `$ ./test.sh`
 
+
+### Bring up a MicroDC environtment
+This will bring up kubernetes clusters in AWS accounts.  In this example we will spin up a single cluster called dev.
+
+1. First we create a config.yml
+```
+```
+

@@ -16,6 +16,7 @@ class TestMain(unittest.TestCase):
                         '--env', 'dev',
                         '--stack', 'application',
                         '--workdir', 'tests',
+                        '--tool', 'terraform',
                         'up']
         with patch('sys.argv', return_value):
             print(sys.argv)

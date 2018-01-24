@@ -3,8 +3,9 @@ from microdc.parse_arguments import parse_args
 from microdc.yaml_loader import readyaml, check_config
 from microdc.output_commands import (setup_environment,
                                      setup_microdc_workarea,
+                                     run_kubectl,
                                      run_terraform,
-                                     kops_runner)
+                                     run_kops)
 
 
 def main():
@@ -26,14 +27,15 @@ def main():
 
     setup_environment(config, options)
 
-    if options.tool == 'all':
-        print("--tool 'all' - Not implemented, please specify a tool - terraform, kops")
+    actions = ["up", "down"]
+    if options.action not in actions:
+        raise ValueError("{} is not supported - Action should be one of {}".format(options.action, actions))
 
-    if options.tool == 'terraform':
-        run_terraform(config, options)
-
-    if options.tool == 'kops':
-        kops_runner(config, options)
+    tools = ["kops", "terraform", "kubectl"]
+    try:
+        globals()["run_{}".format(options.tool)](config, options)
+    except KeyError:
+        raise ValueError("{} is not supported - tool should be one of {}".format(options.tool, tools))
 
     return True
 
