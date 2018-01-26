@@ -20,10 +20,20 @@ A python package to manage a pick 'n' mix Kubernetes infrastructure on AWS
 ### Bring up a MicroDC environment
 This will bring up kubernetes clusters in AWS accounts.  In this example we will spin up a single cluster called dev.
 
-0. Meet the prerequisites
-```
-TODO
-```
+### Meet the prerequisites
+ * Two accounts with AWS - prod and nonprod (you can also go with one)
+ * Delegate a domain or sub domain
+ * Generate a domain certificate from ACM and save the arn for use in the config file below - [howto](https://github.com/EqualExpertsMicroDC/ee-microdc-init/blob/master/docs/configure_acm_cert.md)
+ * We have found raising the following AWS limits helpful (based on a environment setup of dev, test, stage, prod) :
+   - Raise the Ec2 instance limit to 100
+   - Increase elastic IPs to 20
+   - Raise the VPC limit to 20
+ * Install terraform - Download the relevant binary for your operating system [here](https://www.terraform.io/downloads.html)
+ * Install kops - Download the relevant binary for your operating system [here](https://github.com/kubernetes/kops/releases/tag/1.8.0)
+ * Install kubectl - Follow [these](https://kubernetes.io/docs/tasks/tools/install-kubectl/#install-kubectl-binary-via-curl) steps
+ * Install AWS CLI - Instruction [here](https://docs.aws.amazon.com/cli/latest/userguide/installing.html)
+
+### Then follow these steps
 
 1. First we create a config.yml
 ```
