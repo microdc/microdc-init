@@ -14,7 +14,7 @@ class TestMain(unittest.TestCase):
                         '--config', 'tests/good_config.yaml',
                         '--account', 'nonprod',
                         '--env', 'dev',
-                        '--stack', 'application',
+                        '--stack', 'service',
                         '--workdir', 'tests',
                         '--tool', 'terraform',
                         'up']
@@ -31,7 +31,7 @@ class TestMain(unittest.TestCase):
                         '--config', 'tests/good_config.yaml',
                         '--account', 'nonprod',
                         '--env', 'dev',
-                        '--stack', 'application',
+                        '--stack', 'service',
                         '--workdir', 'tests',
                         '--tool', 'kops',
                         'up']
