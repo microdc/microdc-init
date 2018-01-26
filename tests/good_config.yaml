@@ -13,10 +13,13 @@ accounts:
     environments:
       mgmt:
         stack: mgmt
+        network_offset: 20
       dev:
         stack: service
+        network_offset: 0
       stage:
         stack: service
+        network_offset: 1
   prod:
     account_id: 565656565656
     domain: prod.test.com
@@ -26,6 +29,7 @@ accounts:
     environments:
       prod:
         stack: service
+        network_offset: 10
 
 
 component_repos:

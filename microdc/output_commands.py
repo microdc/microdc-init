@@ -266,6 +266,7 @@ def run_kops(config, options):
     cluster_api_elb_name = "api-{environment}{account}-{project}-k8s".format(environment=environment_dash,
                                                                              account=account,
                                                                              project=project)
+    offset = config['accounts'][options.account]['environments'][options.env]['network_offset']
 
     print(("export KOPS_STATE_STORE={state_store}\n".format(state_store=state_store)))
 
@@ -301,7 +302,7 @@ def run_kops(config, options):
 
     if options.action in ['up', 'apply', 'create']:
 
-        subnets_19, subnets_22 = generate_subnets(cidr)
+        subnets_19, subnets_22 = generate_subnets(cidr, offset)
         cluster_config_yaml = parsetemplate(readtemplate('kops_cluster.yaml'),
                                             network_cidr=cidr,
                                             cluster=cluster,
