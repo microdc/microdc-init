@@ -59,7 +59,7 @@ def run_kubectl(config, options):
                              acm_cert=acm_cert))
 
     print("\n".join(['(\ncd {component_dir}/kubectl && \\',
-                     'kubectl apply -Rf .\n)',
+                     'while true; do if kubectl apply -Rf .; then break; fi; done\n)',
                      '(\ncd {component_dir}/kubectl-incomplete && \\',
                      'for file in $(find . -name "*.yaml"); do cat ${{file}} | envsubst | kubectl apply -f - ; done',
                      ')'])
