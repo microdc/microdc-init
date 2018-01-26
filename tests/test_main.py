@@ -31,9 +31,24 @@ class TestMain(unittest.TestCase):
                         '--config', 'tests/good_config.yaml',
                         '--account', 'nonprod',
                         '--env', 'dev',
-                        '--stack', 'service',
                         '--workdir', 'tests',
                         '--tool', 'kops',
+                        'up']
+        with patch('sys.argv', return_value):
+            print(sys.argv)
+            result = main()
+        self.assertEquals(result, True)
+
+    def test_main_with_kubectl_tool(self):
+        """
+        If valid options and kubectl tool is given main should return True
+        """
+        return_value = ['microdc',
+                        '--config', 'tests/good_config.yaml',
+                        '--account', 'nonprod',
+                        '--env', 'dev',
+                        '--workdir', 'tests',
+                        '--tool', 'kubectl',
                         'up']
         with patch('sys.argv', return_value):
             print(sys.argv)
