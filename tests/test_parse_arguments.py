@@ -22,6 +22,7 @@ class TestParseArguments(unittest.TestCase):
                              '--env', 'dev',
                              '--stack', 'application',
                              '--workdir', 'tests',
+                             '--tool', 'terraform',
                              'up'])
         self.assertEquals(result.config, '../dir/file.yaml')
         self.assertEquals(result.account, 'nonprod')

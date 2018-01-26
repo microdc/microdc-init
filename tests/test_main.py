@@ -14,8 +14,9 @@ class TestMain(unittest.TestCase):
                         '--config', 'tests/good_config.yaml',
                         '--account', 'nonprod',
                         '--env', 'dev',
-                        '--stack', 'application',
+                        '--stack', 'service',
                         '--workdir', 'tests',
+                        '--tool', 'terraform',
                         'up']
         with patch('sys.argv', return_value):
             print(sys.argv)
@@ -30,7 +31,7 @@ class TestMain(unittest.TestCase):
                         '--config', 'tests/good_config.yaml',
                         '--account', 'nonprod',
                         '--env', 'dev',
-                        '--stack', 'application',
+                        '--stack', 'service',
                         '--workdir', 'tests',
                         '--tool', 'kops',
                         'up']

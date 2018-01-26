@@ -30,6 +30,7 @@ def setup_environment(config, options):
 
     print(("export AWS_DEFAULT_REGION={region}\n"
            "export AWS_DEFAULT_PROFILE={project}-{account}\n"
+           "export AWS_PROFILE={project}-{account}\n"
            .format(project=config['project'],
                    environment=options.env,
                    account=options.account,
@@ -38,14 +39,102 @@ def setup_environment(config, options):
     return True
 
 
+def run_kubectl(config, options):
+
+    if options.env not in list(config['accounts'][options.account]['environments'].keys()):
+        raise ValueError("Env needs to be one of {}"
+                         .format(list(config['accounts'][options.account]['environments'].keys())))
+
+    acm_cert = config['accounts'][options.account]['sslcertificate']
+    component_dir = "{workdir}/repos/{component}".format(workdir=options.workdir,
+                                                         component='k8s-service-stack-full')
+    environment_dot = "{}.".format(options.env) if options.env != 'prod' else ''
+    domain = config['accounts'][options.account]['domain']
+
+    print("\n".join(['export ENVIRONMENT_DOMAIN={environment}{domain}',
+                     'export LB_DNS_NAME=ingress.{environment}{domain}',
+                     'export INTERNAL_LB_DNS_NAME=ingress.internal.{environment}{domain}',
+                     'export ACM_CERT_ARN={acm_cert}\n'])
+          .format(environment=environment_dot,
+                  domain=domain,
+                  acm_cert=acm_cert))
+
+    print("\n".join(['(\ncd {component_dir}/kubectl && \\',
+                     'while true; do if kubectl apply -Rf .; then break; fi; done\n)',
+                     '(\ncd {component_dir}/kubectl-incomplete && \\',
+                     'for file in $(find . -name "*.yaml"); do cat ${{file}} | envsubst | kubectl apply -f - ; done',
+                     ')'])
+          .format(component_dir=component_dir))
+    return True
+
+
 def run_terraform(config, options):
     print(("export TF_PLUGIN_CACHE_DIR=\"/tmp/terraform.d/plugin-cache\""))
 
+    if options.action == "up":
+        action = 'apply'
+    elif options.action == "down":
+        action = 'destroy -force'
+    else:
+        raise ValueError("{} is not supported".format(options.action))
+
+    stacks = ['global', 'service', 'mgmt']
+    if options.stack not in stacks:
+        raise ValueError("Terraform stack needs to be on of {}".format(stacks))
+
+    if not options.stack == 'global':
+        if options.env not in list(config['accounts'][options.account]['environments'].keys()):
+            raise ValueError("Env needs to be one of {}"
+                             .format(list(config['accounts'][options.account]['environments'].keys())))
+        if not options.stack == config['accounts'][options.account]['environments'][options.env]['stack']:
+            raise ValueError("According to the config file stack should be set to {} for {}"
+                             .format(config['accounts'][options.account]['environments'][options.env]['stack'],
+                                     options.env))
+
+    def run(action, stack_dir, lock_table, state_bucket, run_vars, env, stack):
+
+        print("\n".join(["cd {stack_dir}",
+                         "rm -rfv .terraform terraform.tfstate.d"])
+              .format(env=options.env,
+                      stack_dir=stack_dir))
+
+        print(("(\n"
+               "terraform init \\\n"
+               "         -backend-config \"key={stack}-{account}.tfstate\" \\\n"
+               "         -backend-config \"bucket={state_bucket}\" \\\n"
+               "         -backend-config \"dynamodb_table={lock_table}\"\n"
+               ")\n"
+               .format(stack=stack,
+                       account=options.account,
+                       lock_table=lock_table,
+                       state_bucket=state_bucket,
+                       )))
+
+        if stack == 'service':
+            print("\n".join(["terraform workspace select {env} || terraform workspace new {env}"])
+                  .format(env=options.env))
+
+        print(("(\n"
+               "terraform {action} \\\n"
+               "{run_vars}"
+               ")\n"
+               .format(action=action,
+                       run_vars=run_vars
+                       )))
+        return True
+
+    stack_dir = "{workdir}/repos/{component}/providers/aws/{stack}".format(workdir=options.workdir,
+                                                                           component='terraform',
+                                                                           stack=options.stack,
+                                                                           account=options.account)
+    lock_table = ("{project}-terraform-lock"
+                  .format(project=config['project']))
+    state_bucket = ("{project}-terraform-{stack}"
+                    .format(project=config['project'],
+                            stack=options.stack))
+
     if options.stack == 'global':
-        stack_dir = "{}/repos/terraform/providers/aws/global-{}".format(options.workdir, options.account)
-        init_vars = ("         -backend-config \"bucket={project}-terraform-global\" \\\n"
-                     "         -backend-config \"dynamodb_table={project}-terraform-lock\"\n"
-                     .format(project=config['project']))
+
         run_vars = ("          -var \"domain={domain}\" \\\n"
                     "          -var \"project={project}\" \\\n"
                     "          -var \"account={account}\" \\\n"
@@ -57,19 +146,62 @@ def run_terraform(config, options):
                             prod_account_id=config['accounts']['prod']['account_id'],
                             nonprod_account_id=config['accounts']['nonprod']['account_id']))
 
-    print(("(\n"
-           "cd {stack_dir}\n"
-           "rm -rfv .terraform terraform.tfstate.d\n"
-           "terraform init \\\n"
-           "{init_vars}"
-           "terraform {action} \\\n"
-           "{run_vars}"
-           ")\n"
-           .format(action='destroy -force' if options.action == 'destroy' else options.action,
-                   stack_dir=stack_dir,
-                   init_vars=init_vars,
-                   run_vars=run_vars
-                   )))
+        if options.action == 'up' and options.bootstrap is True:
+            print("\n".join(["if ! aws s3 ls s3://{state_bucket}/global-{account}.tfstate; then"])
+                  .format(state_bucket=state_bucket,
+                          account=options.account))
+            if options.account == 'nonprod':
+                print("\n".join(["aws s3api create-bucket \\",
+                                 "        --bucket {state_bucket}-temp \\",
+                                 "        --acl private \\",
+                                 "        --region {region} \\",
+                                 "        --create-bucket-configuration \\",
+                                 "        LocationConstraint={region}",
+                                 "aws s3api wait bucket-exists --bucket {state_bucket}-temp"])
+                      .format(state_bucket=state_bucket,
+                              region=config['accounts'][options.account]['region']))
+            print("\n".join(["aws dynamodb create-table \\",
+                             "         --region {region} \\",
+                             "         --table-name {lock_table}-temp \\",
+                             "         --attribute-definitions AttributeName=LockID,AttributeType=S \\",
+                             "         --key-schema AttributeName=LockID,KeyType=HASH \\",
+                             "         --provisioned-throughput ReadCapacityUnits=1,WriteCapacityUnits=1",
+                             "aws dynamodb wait table-exists --table-name {lock_table}-temp"])
+                  .format(lock_table=lock_table,
+                          region=config['accounts'][options.account]['region']))
+
+            if options.account == 'nonprod':
+                run(action, stack_dir, lock_table + "-temp", state_bucket + "-temp", run_vars)
+                print("\n".join(["aws s3 mv \\",
+                                 "        s3://{state_bucket}-temp/global.tfstate \\",
+                                 "        s3://{state_bucket}/global.tfstate",
+                                 "aws s3api delete-bucket \\",
+                                 "        --bucket {state_bucket}-temp"])
+                      .format(state_bucket=state_bucket))
+            else:
+                run(action, stack_dir, lock_table + "-temp", state_bucket, run_vars, options.env, options.stack)
+
+            print("\n".join(["aws dynamodb delete-table \\",
+                             "        --table-name {lock_table}-temp",
+                             "fi"])
+                  .format(lock_table=lock_table))
+
+    if options.stack == 'service':
+        cluster_api_elb_name = "api-{account}-{project}-k8s".format(environment=options.env,
+                                                                    account=options.account,
+                                                                    project=config['project'])
+
+        get_k8s_cluster_elb(cluster_api_elb_name)
+
+        run_vars = ("          -var \"domain={domain}\" \\\n"
+                    "          -var \"project={project}\" \\\n"
+                    "          -var \"kubernetes_api_elb=$K8S_API_ELB\" \\\n"
+                    "          -var \"account={account}\"\n"
+                    .format(project=config['project'],
+                            account=options.account,
+                            domain=config['accounts'][options.account]['domain']))
+
+    run(action, stack_dir, lock_table, state_bucket, run_vars, options.env, options.stack)
 
     return True
 
@@ -86,7 +218,31 @@ def create_kops_state_bucket(config, options):
     return True
 
 
-def kops_runner(config, options):
+def get_k8s_cluster_elb(cluster_api_elb):
+
+    print("\n".join(['export  K8S_API_ELB=$(\\',
+                     'aws elb describe-load-balancers \\',
+                     '        --query \\',
+                     '\'LoadBalancerDescriptions[?starts_with(LoadBalancerName, \\',
+                     '`{cluster_api_elb}`) == `true`].[DNSName]\' \\',
+                     '        --output text)'])
+          .format(cluster_api_elb=cluster_api_elb))
+    return True
+
+
+def run_kops_update_cluster(cluster):
+
+    print("\n".join(["kops update cluster {cluster} --yes"])
+          .format(cluster=cluster))
+    return True
+
+
+def run_kops(config, options):
+
+    if options.env not in list(config['accounts'][options.account]['environments'].keys()):
+        raise ValueError("Env needs to be one of {}"
+                         .format(list(config['accounts'][options.account]['environments'].keys())))
+
     if options.bootstrap:
         create_kops_state_bucket(config, options)
 
@@ -160,19 +316,12 @@ def kops_runner(config, options):
                "kops create -f {cluster_config_file}\n\n"
                "ssh-keygen -t rsa -b 4096 -P '' -C MicroDC -f {cluster_rsa_key}\n\n"
                "kops create secret --name {cluster} sshpublickey admin -i {cluster_rsa_key}.pub\n\n"
-               "kops update cluster {cluster} --yes\n\n"
-               "aws elb describe-load-balancers \\\n"
-               "        --query 'LoadBalancerDescriptions[?starts_with(LoadBalancerName, \n"
-               "                 `{cluster_api_elb_name}`) == `true`].[DNSName]' \\\n"
-               "        --output text\n\n"
-               "aws ec2 describe-subnets --query \"Subnets[?Tags[?Key=='Name'&&contains(Value,\n"
-               "                                                                        'utility')]].SubnetId\"\\\n"
-               "                         --output text | \\\n"
-               "xargs aws ec2 create-tags --tags \"Key=kubernetes.io/role/internal-elb,Value=true\" --resources\n"
                .format(cluster=cluster,
                        cluster_config_file=cluster_config_file,
                        cluster_config_yaml=cluster_config_yaml,
                        cluster_rsa_key=cluster_rsa_key,
                        cluster_api_elb_name=cluster_api_elb_name)))
+
+        run_kops_update_cluster(cluster)
 
     return True

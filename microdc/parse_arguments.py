@@ -28,17 +28,11 @@ def parse_args(argv):
                           metavar='CONFIG',
                           required=2,
                           help='The location of the YAML config file')
-    required.add_argument('--env',
-                          metavar='ENV',
-                          required=2,
-                          help='Which environment to modify')
-    required.add_argument('--stack',
-                          metavar='STACK',
-                          required=2,
-                          help='Which stack to apply')
+    parser.add_argument('--stack',
+                        metavar='STACK',
+                        help='Which stack to apply')
     parser.add_argument('--tool',
                         metavar='TOOL',
-                        default='all',
                         help='Which tool to use')
     parser.add_argument('--account',
                         metavar='ACCOUNT',
@@ -47,6 +41,10 @@ def parse_args(argv):
     parser.add_argument('--bootstrap',
                         action='store_true',
                         help='Run bootsrap steps')
+    parser.add_argument('--env',
+                        metavar='ENV',
+                        default='None',
+                        help='Which environment to modify')
     parser.add_argument('--datefile',
                         metavar='DATEFILE',
                         default='.datefile',
