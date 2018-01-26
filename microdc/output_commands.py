@@ -87,31 +87,50 @@ def run_terraform(config, options):
         if not options.stack == config['accounts'][options.account]['environments'][options.env]['stack']:
             raise ValueError("According to the config file stack should be set to {} for {}".format(config['accounts'][options.account]['environments'][options.env]['stack'], options.env))
 
-    def run(action, stack_dir, lock_table, state_bucket, run_vars):
+    def run(action, stack_dir, lock_table, state_bucket, run_vars, env, stack):
+
+        print("\n".join(["cd {stack_dir}",
+                         "rm -rfv .terraform terraform.tfstate.d"])
+                         .format(env=options.env,
+                                 stack_dir=stack_dir))
+
         print(("(\n"
-               "cd {stack_dir}\n"
-               "rm -rfv .terraform terraform.tfstate.d\n"
                "terraform init \\\n"
+               "         -backend-config \"key={stack}-{account}.tfstate\" \\\n"
                "         -backend-config \"bucket={state_bucket}\" \\\n"
                "         -backend-config \"dynamodb_table={lock_table}\"\n"
+               ")\n"
+               .format(stack=stack,
+                       account=options.account,
+                       lock_table=lock_table,
+                       state_bucket=state_bucket,
+                       )))
+
+        if stack == 'service':
+            print("\n".join(["terraform workspace select {env} || terraform workspace new {env}"])
+                  .format(env=options.env))
+
+        print(("(\n"
                "terraform {action} \\\n"
                "{run_vars}"
                ")\n"
                .format(action=action,
-                       stack_dir=stack_dir,
-                       lock_table=lock_table,
-                       state_bucket=state_bucket,
                        run_vars=run_vars
                        )))
         return True
 
+    stack_dir = "{workdir}/repos/{component}/providers/aws/{stack}".format(workdir=options.workdir,
+                                                                           component='terraform',
+                                                                           stack=options.stack,
+                                                                           account=options.account)
+    lock_table = ("{project}-terraform-lock"
+                 .format(project=config['project']))
+    state_bucket = ("{project}-terraform-{stack}"
+                 .format(project=config['project'],
+                         stack=options.stack))
 
     if options.stack == 'global':
 
-        stack_dir = "{workdir}/repos/{component}/providers/aws/{stack}".format(workdir=options.workdir,
-                                                                               component='terraform',
-                                                                               stack=options.stack,
-                                                                               account=options.account)
         run_vars = ("          -var \"domain={domain}\" \\\n"
                     "          -var \"project={project}\" \\\n"
                     "          -var \"account={account}\" \\\n"
@@ -122,47 +141,65 @@ def run_terraform(config, options):
                             domain=config['accounts'][options.account]['domain'],
                             prod_account_id=config['accounts']['prod']['account_id'],
                             nonprod_account_id=config['accounts']['nonprod']['account_id']))
-        lock_table = ("{project}-terraform-lock"
-                     .format(project=config['project']))
-        state_bucket = ("{project}-terraform-global"
-                     .format(project=config['project']))
 
         if options.action == 'up' and options.bootstrap is True:
-            print("\n".join(["if ! aws s3 ls s3://{state_bucket}/global.tfstate; then",
-                             "aws s3api create-bucket \\",
-                             "        --bucket {state_bucket}-temp \\",
-                             "        --acl private \\",
-                             "        --region {region} \\",
-                             "        --create-bucket-configuration \\",
-                             "        LocationConstraint={region}",
-                             "aws dynamodb create-table \\",
+            print("\n".join(["if ! aws s3 ls s3://{state_bucket}/global-{account}.tfstate; then"])
+                             .format(state_bucket=state_bucket,
+                                     account=options.account))
+            if options.account == 'nonprod':
+                print("\n".join(["aws s3api create-bucket \\",
+                                 "        --bucket {state_bucket}-temp \\",
+                                 "        --acl private \\",
+                                 "        --region {region} \\",
+                                 "        --create-bucket-configuration \\",
+                                 "        LocationConstraint={region}",
+                                 "aws s3api wait bucket-exists --bucket {state_bucket}-temp"])
+                                 .format(state_bucket=state_bucket,
+                                         region=config['accounts'][options.account]['region']))
+            print("\n".join(["aws dynamodb create-table \\",
                              "         --region {region} \\",
                              "         --table-name {lock_table}-temp \\",
                              "         --attribute-definitions AttributeName=LockID,AttributeType=S \\",
                              "         --key-schema AttributeName=LockID,KeyType=HASH \\",
                              "         --provisioned-throughput ReadCapacityUnits=1,WriteCapacityUnits=1",
-                             "aws s3api wait bucket-exists --bucket {state_bucket}-temp",
                              "aws dynamodb wait table-exists --table-name {lock_table}-temp"])
                              .format(lock_table=lock_table,
-                                     state_bucket=state_bucket,
                                      region=config['accounts'][options.account]['region']))
 
-            run(action, stack_dir, lock_table+"-temp", state_bucket+"-temp", run_vars)
-            print("\n".join(["aws s3 mv \\",
-                             "        s3://{state_bucket}-temp/global.tfstate \\",
-                             "        s3://{state_bucket}/global.tfstate",
-                             "aws dynamodb delete-table \\",
+            if options.account == 'nonprod':
+                run(action, stack_dir, lock_table+"-temp", state_bucket+"-temp", run_vars)
+                print("\n".join(["aws s3 mv \\",
+                                 "        s3://{state_bucket}-temp/global.tfstate \\",
+                                 "        s3://{state_bucket}/global.tfstate",
+                                 "aws s3api delete-bucket \\",
+                                 "        --bucket {state_bucket}-temp"])
+                                 .format(state_bucket=state_bucket))
+            else:
+                run(action, stack_dir, lock_table+"-temp", state_bucket, run_vars, options.env, options.stack)
+
+            print("\n".join(["aws dynamodb delete-table \\",
                              "        --table-name {lock_table}-temp",
-                             "aws s3api delete-bucket \\",
-                             "        --bucket {state_bucket}-temp"])
-                             .format(lock_table=lock_table,
-                                     state_bucket=state_bucket))
+                             "fi"])
+                             .format(lock_table=lock_table))
 
 
-        run(action, stack_dir, lock_table, state_bucket, run_vars)
+    if options.stack == 'service':
+        cluster_api_elb_name = "api-{account}-{project}-k8s".format(environment=options.env,
+                                                                    account=options.account,
+                                                                    project=config['project'])
 
-    else:
-         return False
+        get_k8s_cluster_elb(cluster_api_elb_name)
+
+        run_vars = ("          -var \"domain={domain}\" \\\n"
+                    "          -var \"project={project}\" \\\n"
+                    "          -var \"kubernetes_api_elb=$K8S_API_ELB\" \\\n"
+                    "          -var \"account={account}\"\n"
+                    .format(project=config['project'],
+                            account=options.account,
+                            domain=config['accounts'][options.account]['domain']))
+
+
+    run(action, stack_dir, lock_table, state_bucket, run_vars, options.env, options.stack)
 
 
     return True
@@ -282,7 +319,6 @@ def run_kops(config, options):
                        cluster_rsa_key=cluster_rsa_key,
                        cluster_api_elb_name=cluster_api_elb_name)))
 
-        get_k8s_cluster_elb(cluster_api_elb_name)
-        run_kops_update_cluster(cluster_api_elb_name)
+        run_kops_update_cluster(cluster)
 
     return True
