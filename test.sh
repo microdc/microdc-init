@@ -21,6 +21,6 @@ echo "Running tests..."
 python -m pytest tests/
 
 echo "Running flake8..."
-flake8 microdc/ tests/
+flake8 --ignore=F401 microdc/ tests/
 
 echo "Done!!"
