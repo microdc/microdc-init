@@ -36,11 +36,9 @@ This will bring up kubernetes clusters in AWS accounts.  In this example we will
 ### Then follow these steps
 
 1. First we create a config.yml
-```
-cat > config.yml << EOF
-TODO
-EOF
-```
+
+   Using the [test config](https://github.com/EqualExpertsMicroDC/ee-microdc-init/blob/master/tests/good_config.yaml) as a template, fill out the relevant details.
+
 2. We run the global setup
 ```
 microdc --config config.yml --account prod --stack global --tool terraform up --bootstrap
