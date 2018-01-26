@@ -14,7 +14,9 @@ class TestYamlLoader(unittest.TestCase):
         result = readyaml('tests/good_config.yaml')
         self.assertIs(type(result), collections.OrderedDict)
         self.assertEquals(result['project'], 'testproject')
-        self.assertEquals(result['apps']['helloworld']['port'], 39111)
+        self.assertEquals(result['accounts']['nonprod']['account_id'], 454545454545)
+        self.assertEquals(result['accounts']['nonprod']['environments']['dev']['network_offset'], 0)
+        self.assertEquals(result['accounts']['prod']['domain'], 'prod.test.com')
 
     def test_readyaml_with_invalid_yaml(self):
         """
