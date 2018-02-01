@@ -36,7 +36,7 @@ def parse_args(argv):
                         help='Which tool to use')
     parser.add_argument('--account',
                         metavar='ACCOUNT',
-                        default='default',
+                        default='nonprod',
                         help='Set the AWS account to use')
     parser.add_argument('--bootstrap',
                         action='store_true',
