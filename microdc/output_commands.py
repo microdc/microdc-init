@@ -166,7 +166,7 @@ def run_terraform(config, options):
                           region=config['accounts'][options.account]['region']))
 
             if options.account == 'nonprod':
-                run(action, stack_dir, lock_table + "-temp", state_bucket + "-temp", run_vars)
+                run(action, stack_dir, lock_table + "-temp", state_bucket + "-temp", run_vars, options.env, options.stack)
                 print("\n".join(["aws s3 mv \\",
                                  "        s3://{state_bucket}-temp/global.tfstate \\",
                                  "        s3://{state_bucket}/global.tfstate",
