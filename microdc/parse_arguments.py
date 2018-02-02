@@ -58,9 +58,7 @@ def parse_args(argv):
                         help='Overwrite the various MicroDC component repos when using --setup')
     parser.add_argument('--workdir',
                         metavar='WORKDIR',
-                        default=os.environ.get('WORKDIR',
-                                               os.environ.get('HOME') + '/MicroDC'),
-                        help='MicroDC working folder ~/.microdc')
+                        help='MicroDC working folder eg. /home/user/.microdc')
     parser.add_argument('action',
                         metavar='ACTION',
                         help='Action to perform: up or dowm')
