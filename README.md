@@ -7,8 +7,10 @@ A python package to manage a pick 'n' mix Kubernetes infrastructure on AWS
 `pip install git+https://github.com/EqualExpertsMicroDC/ee-microdc-init`
 
 #### or run with docker
-`docker build -t microdc .`
-`docker run microdc microdc --help`
+```
+docker build -t microdc .
+docker run microdc microdc --help
+```
 
 ### Usage
 `microdc --help`
@@ -32,6 +34,7 @@ This will bring up kubernetes clusters in AWS accounts.  In this example we will
  * Install kops - Download the relevant binary for your operating system [here](https://github.com/kubernetes/kops/releases/tag/1.8.0)
  * Install kubectl - Follow [these](https://kubernetes.io/docs/tasks/tools/install-kubectl/#install-kubectl-binary-via-curl) steps
  * Install AWS CLI - Instruction [here](https://docs.aws.amazon.com/cli/latest/userguide/installing.html)
+ * Install envsubst
 
 ### Then follow these steps
 
