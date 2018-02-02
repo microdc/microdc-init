@@ -219,9 +219,7 @@ def get_k8s_cluster_elb(cluster_api_elb):
     print("\n".join(['export  K8S_API_ELB=$(\\',
                      'aws elb describe-load-balancers \\',
                      '        --query \\',
-                     '\'LoadBalancerDescriptions[?starts_with(LoadBalancerName, \\',
-                     '`{cluster_api_elb}`) == `true`].[DNSName]\' \\',
-                     '        --output text)'])
+                     '\'LoadBalancerDescriptions[?starts_with(LoadBalancerName, `{cluster_api_elb}`) == `true`].[DNSName]\' --output text)'])
           .format(cluster_api_elb=cluster_api_elb))
     return True
 
