@@ -45,14 +45,14 @@ def run_kubectl(config, options):
     acm_cert = config['accounts'][options.account]['sslcertificate']
     component_dir = "{workdir}/repos/{component}".format(workdir=options.workdir,
                                                          component='k8s-service-stack-full')
-    environment_dot = "{}.".format(options.env) if options.env != 'prod' else ''
+    environment = options.env
     domain = config['accounts'][options.account]['domain']
 
-    print("\n".join(['export ENVIRONMENT_DOMAIN={environment}{domain}',
-                     'export LB_DNS_NAME=ingress.{environment}{domain}',
+    print("\n".join(['export ENVIRONMENT_DOMAIN={environment}.{domain}',
+                     'export LB_DNS_NAME=ingress.{environment}.{domain}',
                      'export INTERNAL_LB_DNS_NAME=ingress.internal.{environment}{domain}',
                      'export ACM_CERT_ARN={acm_cert}\n'])
-          .format(environment=environment_dot,
+          .format(environment=environment,
                   domain=domain,
                   acm_cert=acm_cert))
 
@@ -245,13 +245,12 @@ def run_kops(config, options):
 
     project = config['project']
     action = options.action
-    environment_dot = "{}.".format(options.env) if options.env != 'prod' else ''
-    environment_dash = "{}-".format(options.env) if options.env != 'prod' else ''
+    environment = options.env
     account = options.account
     domain = config['accounts'][options.account]['domain']
     cidr = config['estate_cidr']
     region = config['accounts'][options.account]['region']
-    cluster = "{environment}{account}.{project}.k8s.local".format(environment=environment_dot,
+    cluster = "{environment}.{account}.{project}.k8s.local".format(environment=environment,
                                                                   account=account,
                                                                   project=project)
     state_store = "s3://{project}-{account}-kops".format(project=config['project'],
@@ -260,7 +259,7 @@ def run_kops(config, options):
                                                                  cluster=cluster)
     cluster_rsa_key = "{workdir}/kops-{cluster}-id_rsa".format(workdir=options.workdir,
                                                                cluster=cluster)
-    cluster_api_elb_name = "api-{environment}{account}-{project}-k8s".format(environment=environment_dash,
+    cluster_api_elb_name = "api-{environment}-{account}-{project}-k8s".format(environment=environment,
                                                                              account=account,
                                                                              project=project)
     offset = config['accounts'][options.account]['environments'][options.env]['network_offset']
