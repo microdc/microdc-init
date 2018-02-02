@@ -184,9 +184,6 @@ def run_terraform(config, options):
                   .format(lock_table=lock_table))
 
     if options.stack == 'service':
-        cluster_api_elb_name = "api-{account}-{project}-k8s".format(environment=options.env,
-                                                                    account=options.account,
-                                                                    project=config['project'])
 
         get_k8s_cluster_elb(options.env)
 
