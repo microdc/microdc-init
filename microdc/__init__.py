@@ -24,7 +24,7 @@ def main():
                                overwrite=options.overwrite if 'overwrite' in options else False)
         sys.exit(0)
 
-    if check_config(expected_config_values, config):
+    if not check_config(expected_config_values, config):
         sys.exit(1)
 
     setup_environment(config, options)
