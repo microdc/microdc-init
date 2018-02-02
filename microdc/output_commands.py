@@ -29,12 +29,9 @@ def setup_microdc_workarea(workdir, component_repos, datefile, overwrite=False):
 def setup_environment(config, options):
 
     print(("export AWS_DEFAULT_REGION={region}\n"
-           "export AWS_DEFAULT_PROFILE={project}-{account}\n"
-           "export AWS_PROFILE={project}-{account}\n"
-           .format(project=config['project'],
-                   environment=options.env,
-                   account=options.account,
-                   cidr=config['estate_cidr'],
+           "export AWS_DEFAULT_PROFILE={profile}\n"
+           "export AWS_PROFILE={profile}\n"
+           .format(profile=config['accounts'][options.account]['awsprofile'],
                    region=config['accounts'][options.account]['region'])))
     return True
 
