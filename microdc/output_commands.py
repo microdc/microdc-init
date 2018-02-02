@@ -168,11 +168,12 @@ def run_terraform(config, options):
             if options.account == 'nonprod':
                 run(action, stack_dir, lock_table + "-temp", state_bucket + "-temp", run_vars, options.env, options.stack)
                 print("\n".join(["aws s3 mv \\",
-                                 "        s3://{state_bucket}-temp/global.tfstate \\",
-                                 "        s3://{state_bucket}/global.tfstate",
+                                 "        s3://{state_bucket}-temp/global-{account}.tfstate \\",
+                                 "        s3://{state_bucket}/global-{account}.tfstate",
                                  "aws s3api delete-bucket \\",
                                  "        --bucket {state_bucket}-temp"])
-                      .format(state_bucket=state_bucket))
+                      .format(state_bucket=state_bucket,
+                              account=options.account))
             else:
                 run(action, stack_dir, lock_table + "-temp", state_bucket, run_vars, options.env, options.stack)
 
