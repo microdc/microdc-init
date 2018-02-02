@@ -300,7 +300,7 @@ def run_kops(config, options):
         cluster_config_yaml = parsetemplate(readtemplate('kops_cluster.yaml'),
                                             network_cidr=cidr,
                                             cluster=cluster,
-                                            external_domain=domain,
+                                            external_domain="{}.{}".format(environment, domain),
                                             state_store=state_store,
                                             region=region,
                                             subnets_19=subnets_19,
