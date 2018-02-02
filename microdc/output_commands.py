@@ -188,7 +188,7 @@ def run_terraform(config, options):
                                                                     account=options.account,
                                                                     project=config['project'])
 
-        get_k8s_cluster_elb(cluster_api_elb_name)
+        get_k8s_cluster_elb(options.env)
 
         run_vars = ("          -var \"domain={domain}\" \\\n"
                     "          -var \"project={project}\" \\\n"
@@ -215,13 +215,13 @@ def create_kops_state_bucket(config, options):
     return True
 
 
-def get_k8s_cluster_elb(cluster_api_elb):
+def get_k8s_cluster_elb(environment):
 
     print("\n".join(['export  K8S_API_ELB=$(\\',
                      'aws elb describe-load-balancers \\',
                      '        --query \\',
-                     '\'LoadBalancerDescriptions[?starts_with(LoadBalancerName, `{cluster_api_elb}`) == `true`].[DNSName]\' --output text)'])  # noqa: E501
-          .format(cluster_api_elb=cluster_api_elb))
+                     '\'LoadBalancerDescriptions[?starts_with(LoadBalancerName, `api-{environment}-`) == `true`].[DNSName]\' --output text)'])  # noqa: E501
+          .format(environment=environment))
     return True
 
 
