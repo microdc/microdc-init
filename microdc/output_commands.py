@@ -90,17 +90,16 @@ def run_terraform(config, options):
 
     def run(action, stack_dir, lock_table, state_bucket, run_vars, env, stack):
 
-        print("\n".join(["cd {stack_dir}",
+        print("\n".join(["(",
+                         "cd {stack_dir}",
                          "rm -rfv .terraform terraform.tfstate.d"])
               .format(env=options.env,
                       stack_dir=stack_dir))
 
-        print(("(\n"
-               "terraform init \\\n"
+        print(("terraform init \\\n"
                "         -backend-config \"key={stack}-{account}.tfstate\" \\\n"
                "         -backend-config \"bucket={state_bucket}\" \\\n"
                "         -backend-config \"dynamodb_table={lock_table}\"\n"
-               ")\n"
                .format(stack=stack,
                        account=options.account,
                        lock_table=lock_table,
@@ -111,8 +110,7 @@ def run_terraform(config, options):
             print("\n".join(["terraform workspace select {env} || terraform workspace new {env}"])
                   .format(env=options.env))
 
-        print(("(\n"
-               "terraform {action} \\\n"
+        print(("terraform {action} \\\n"
                "{run_vars}"
                ")\n"
                .format(action=action,
