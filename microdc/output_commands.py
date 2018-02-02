@@ -29,12 +29,9 @@ def setup_microdc_workarea(workdir, component_repos, datefile, overwrite=False):
 def setup_environment(config, options):
 
     print(("export AWS_DEFAULT_REGION={region}\n"
-           "export AWS_DEFAULT_PROFILE={project}-{account}\n"
-           "export AWS_PROFILE={project}-{account}\n"
-           .format(project=config['project'],
-                   environment=options.env,
-                   account=options.account,
-                   cidr=config['estate_cidr'],
+           "export AWS_DEFAULT_PROFILE={profile}\n"
+           "export AWS_PROFILE={profile}\n"
+           .format(profile=config['accounts'][options.account]['awsprofile'],
                    region=config['accounts'][options.account]['region'])))
     return True
 
@@ -48,14 +45,14 @@ def run_kubectl(config, options):
     acm_cert = config['accounts'][options.account]['sslcertificate']
     component_dir = "{workdir}/repos/{component}".format(workdir=options.workdir,
                                                          component='k8s-service-stack-full')
-    environment_dot = "{}.".format(options.env) if options.env != 'prod' else ''
+    environment = options.env
     domain = config['accounts'][options.account]['domain']
 
-    print("\n".join(['export ENVIRONMENT_DOMAIN={environment}{domain}',
-                     'export LB_DNS_NAME=ingress.{environment}{domain}',
+    print("\n".join(['export ENVIRONMENT_DOMAIN={environment}.{domain}',
+                     'export LB_DNS_NAME=ingress.{environment}.{domain}',
                      'export INTERNAL_LB_DNS_NAME=ingress.internal.{environment}{domain}',
                      'export ACM_CERT_ARN={acm_cert}\n'])
-          .format(environment=environment_dot,
+          .format(environment=environment,
                   domain=domain,
                   acm_cert=acm_cert))
 
@@ -93,17 +90,16 @@ def run_terraform(config, options):
 
     def run(action, stack_dir, lock_table, state_bucket, run_vars, env, stack):
 
-        print("\n".join(["cd {stack_dir}",
+        print("\n".join(["(",
+                         "cd {stack_dir}",
                          "rm -rfv .terraform terraform.tfstate.d"])
               .format(env=options.env,
                       stack_dir=stack_dir))
 
-        print(("(\n"
-               "terraform init \\\n"
+        print(("terraform init \\\n"
                "         -backend-config \"key={stack}-{account}.tfstate\" \\\n"
                "         -backend-config \"bucket={state_bucket}\" \\\n"
                "         -backend-config \"dynamodb_table={lock_table}\"\n"
-               ")\n"
                .format(stack=stack,
                        account=options.account,
                        lock_table=lock_table,
@@ -114,8 +110,7 @@ def run_terraform(config, options):
             print("\n".join(["terraform workspace select {env} || terraform workspace new {env}"])
                   .format(env=options.env))
 
-        print(("(\n"
-               "terraform {action} \\\n"
+        print(("terraform {action} \\\n"
                "{run_vars}"
                ")\n"
                .format(action=action,
@@ -171,13 +166,15 @@ def run_terraform(config, options):
                           region=config['accounts'][options.account]['region']))
 
             if options.account == 'nonprod':
-                run(action, stack_dir, lock_table + "-temp", state_bucket + "-temp", run_vars)
+                run(action, stack_dir, lock_table + "-temp", state_bucket + "-temp",
+                    run_vars, options.env, options.stack)
                 print("\n".join(["aws s3 mv \\",
-                                 "        s3://{state_bucket}-temp/global.tfstate \\",
-                                 "        s3://{state_bucket}/global.tfstate",
+                                 "        s3://{state_bucket}-temp/global-{account}.tfstate \\",
+                                 "        s3://{state_bucket}/global-{account}.tfstate",
                                  "aws s3api delete-bucket \\",
                                  "        --bucket {state_bucket}-temp"])
-                      .format(state_bucket=state_bucket))
+                      .format(state_bucket=state_bucket,
+                              account=options.account))
             else:
                 run(action, stack_dir, lock_table + "-temp", state_bucket, run_vars, options.env, options.stack)
 
@@ -187,11 +184,8 @@ def run_terraform(config, options):
                   .format(lock_table=lock_table))
 
     if options.stack == 'service':
-        cluster_api_elb_name = "api-{account}-{project}-k8s".format(environment=options.env,
-                                                                    account=options.account,
-                                                                    project=config['project'])
 
-        get_k8s_cluster_elb(cluster_api_elb_name)
+        get_k8s_cluster_elb(options.env)
 
         run_vars = ("          -var \"domain={domain}\" \\\n"
                     "          -var \"project={project}\" \\\n"
@@ -218,15 +212,13 @@ def create_kops_state_bucket(config, options):
     return True
 
 
-def get_k8s_cluster_elb(cluster_api_elb):
+def get_k8s_cluster_elb(environment):
 
     print("\n".join(['export  K8S_API_ELB=$(\\',
                      'aws elb describe-load-balancers \\',
                      '        --query \\',
-                     '\'LoadBalancerDescriptions[?starts_with(LoadBalancerName, \\',
-                     '`{cluster_api_elb}`) == `true`].[DNSName]\' \\',
-                     '        --output text)'])
-          .format(cluster_api_elb=cluster_api_elb))
+                     '\'LoadBalancerDescriptions[?starts_with(LoadBalancerName, `api-{environment}-`) == `true`].[DNSName]\' --output text)'])  # noqa: E501
+          .format(environment=environment))
     return True
 
 
@@ -248,24 +240,23 @@ def run_kops(config, options):
 
     project = config['project']
     action = options.action
-    environment_dot = "{}.".format(options.env) if options.env != 'prod' else ''
-    environment_dash = "{}-".format(options.env) if options.env != 'prod' else ''
+    environment = options.env
     account = options.account
     domain = config['accounts'][options.account]['domain']
     cidr = config['estate_cidr']
     region = config['accounts'][options.account]['region']
-    cluster = "{environment}{account}.{project}.k8s.local".format(environment=environment_dot,
-                                                                  account=account,
-                                                                  project=project)
+    cluster = "{environment}.{account}.{project}.k8s.local".format(environment=environment,
+                                                                   account=account,
+                                                                   project=project)
     state_store = "s3://{project}-{account}-kops".format(project=config['project'],
                                                          account=options.account)
     cluster_config_file = "{workdir}/kops-{cluster}.yaml".format(workdir=options.workdir,
                                                                  cluster=cluster)
     cluster_rsa_key = "{workdir}/kops-{cluster}-id_rsa".format(workdir=options.workdir,
                                                                cluster=cluster)
-    cluster_api_elb_name = "api-{environment}{account}-{project}-k8s".format(environment=environment_dash,
-                                                                             account=account,
-                                                                             project=project)
+    cluster_api_elb_name = "api-{environment}-{account}-{project}-k8s".format(environment=environment,
+                                                                              account=account,
+                                                                              project=project)
     offset = config['accounts'][options.account]['environments'][options.env]['network_offset']
 
     print(("export KOPS_STATE_STORE={state_store}\n".format(state_store=state_store)))
@@ -306,7 +297,7 @@ def run_kops(config, options):
         cluster_config_yaml = parsetemplate(readtemplate('kops_cluster.yaml'),
                                             network_cidr=cidr,
                                             cluster=cluster,
-                                            external_domain=domain,
+                                            external_domain="{}.{}".format(environment, domain),
                                             state_store=state_store,
                                             region=region,
                                             subnets_19=subnets_19,

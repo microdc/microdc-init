@@ -16,14 +16,15 @@ def main():
                               'estate_cidr',
                               'accounts']
 
-    if not check_config(expected_config_values, config):
-        sys.exit(1)
-
     if options.setup:
         setup_microdc_workarea(workdir=options.workdir,
                                component_repos=config['component_repos'],
                                datefile="{}/{}".format(options.workdir, options.datefile),
                                overwrite=options.overwrite if 'overwrite' in options else False)
+        sys.exit(0)
+
+    if not check_config(expected_config_values, config):
+        sys.exit(1)
 
     setup_environment(config, options)
 

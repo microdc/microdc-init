@@ -35,35 +35,43 @@ This will bring up kubernetes clusters in AWS accounts.  In this example we will
 
 ### Then follow these steps
 
-1. First we create a config.yml
+1. First we setup our environment
 
    Using the [test config](https://github.com/EqualExpertsMicroDC/ee-microdc-init/blob/master/tests/good_config.yaml) as a template, fill out the relevant details.
+   ```
+   microdc --workdir ~/.microdc --config config.yaml --setup up
+   ```
 
-2. We run the global setup
+2. We run the global setup (GLOBAL terraform)
 ```
-microdc --config config.yml --account prod --stack global --tool terraform up --bootstrap
-microdc --config config.yml --account prod --stack global --tool terraform up --bootstrap | sh
+microdc --workdir ~/.microdc --config config.yml --account nonprod --stack global --tool terraform up --bootstrap
+microdc --workdir ~/.microdc --config config.yml --account nonprod --stack global --tool terraform up --bootstrap | sh
 ```
 
 3. Initial cluster setup
 ```
-microdc --config config.yml --account prod --tool kops up --env prod
-microdc --config config.yml --account prod --tool kops up --env prod | sh
+microdc --workdir ~/.microdc --config config.yml --account nonprod --tool kops up --env dev
+microdc --workdir ~/.microdc --config config.yml --account nonprod --tool kops up --env dev | sh
 ```
 
-4. Complete setup around the edges.
+4. Complete setup around the edges. (SERVICE Stack - this is per env)
 ```
-microdc --config config.yml --account prod --stack service --tool terraform up --env prod
-microdc --config config.yml --account prod --stack service --tool terraform up --env prod | sh
+microdc --workdir ~/.microdc --config config.yml --account nonprod --stack service --tool terraform up --env dev
+microdc --workdir ~/.microdc --config config.yml --account nonprod --stack service --tool terraform up --env dev | sh
 ```
 
 5. Validate our setup.
-`kops validate cluster`
-
-6. Deploy stack.
 ```
-microdc --config config.yml --account prod --tool kubectl up --env prod
-microdc --config config.yml --account prod --tool kubectl up --env prod | sh
+# Copy these from the output of the kops command above
+export AWS_DEFAULT_REGION=eu-west-1
+export AWS_PROFILE=test-nonprod
+export KOPS_STATE_STOR=s3://test-nonprod-kops
+kops validate cluster
+```
+6. Deploy kubernets level components - telemetry etc
+```
+microdc --workdir ~/.microdc --config config.yml --account nonprod --tool kubectl up --env dev
+microdc --workdir ~/.microdc --config config.yml --account nonprod --tool kubectl up --env dev | sh
 ```
 
 ### Extras - create developer and deployment users for the apps namespace
