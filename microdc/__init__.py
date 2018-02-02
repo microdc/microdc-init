@@ -16,7 +16,6 @@ def main():
                               'estate_cidr',
                               'accounts']
 
-
     if options.setup:
         setup_microdc_workarea(workdir=options.workdir,
                                component_repos=config['component_repos'],

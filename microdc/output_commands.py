@@ -166,7 +166,8 @@ def run_terraform(config, options):
                           region=config['accounts'][options.account]['region']))
 
             if options.account == 'nonprod':
-                run(action, stack_dir, lock_table + "-temp", state_bucket + "-temp", run_vars, options.env, options.stack)
+                run(action, stack_dir, lock_table + "-temp", state_bucket + "-temp",
+                    run_vars, options.env, options.stack)
                 print("\n".join(["aws s3 mv \\",
                                  "        s3://{state_bucket}-temp/global-{account}.tfstate \\",
                                  "        s3://{state_bucket}/global-{account}.tfstate",
@@ -219,7 +220,7 @@ def get_k8s_cluster_elb(cluster_api_elb):
     print("\n".join(['export  K8S_API_ELB=$(\\',
                      'aws elb describe-load-balancers \\',
                      '        --query \\',
-                     '\'LoadBalancerDescriptions[?starts_with(LoadBalancerName, `{cluster_api_elb}`) == `true`].[DNSName]\' --output text)'])
+                     '\'LoadBalancerDescriptions[?starts_with(LoadBalancerName, `{cluster_api_elb}`) == `true`].[DNSName]\' --output text)'])  # noqa: E501
           .format(cluster_api_elb=cluster_api_elb))
     return True
 
@@ -248,8 +249,8 @@ def run_kops(config, options):
     cidr = config['estate_cidr']
     region = config['accounts'][options.account]['region']
     cluster = "{environment}.{account}.{project}.k8s.local".format(environment=environment,
-                                                                  account=account,
-                                                                  project=project)
+                                                                   account=account,
+                                                                   project=project)
     state_store = "s3://{project}-{account}-kops".format(project=config['project'],
                                                          account=options.account)
     cluster_config_file = "{workdir}/kops-{cluster}.yaml".format(workdir=options.workdir,
@@ -257,8 +258,8 @@ def run_kops(config, options):
     cluster_rsa_key = "{workdir}/kops-{cluster}-id_rsa".format(workdir=options.workdir,
                                                                cluster=cluster)
     cluster_api_elb_name = "api-{environment}-{account}-{project}-k8s".format(environment=environment,
-                                                                             account=account,
-                                                                             project=project)
+                                                                              account=account,
+                                                                              project=project)
     offset = config['accounts'][options.account]['environments'][options.env]['network_offset']
 
     print(("export KOPS_STATE_STORE={state_store}\n".format(state_store=state_store)))
