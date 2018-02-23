@@ -36,8 +36,8 @@ accounts:
 
 component_repos:
   terraform:
-    git: git@github.com:EqualExpertsMicroDC/terraform-stacks.git
+    git: git@github.com:microdc/terraform-stacks.git
     ref: master
   k8s-service-stack-full:
-    git: git@github.com:EqualExpertsMicroDC/k8s-service-stack-full.git
+    git: git@github.com:microdc:k8s-service-stack-full.git
     ref: master

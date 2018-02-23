@@ -1,10 +1,10 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='ee-microdc-init',
+    name='microdc-init',
     version='0.1dev',
     description='A python package to manage a pick `n` mix Kubernetes infrastructure on AWS',
-    url='https://github.com/EqualExpertsMicroDC/ee-microdc-init',
+    url='https://github.com/microdc/microdc-init',
     author='Alan Platt - Equal Experts',
     author_email='aplatt@equalexperts.com',
     packages=find_packages(exclude=['contrib', 'docs', 'tests*']),

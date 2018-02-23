@@ -1,10 +1,10 @@
-[![Build Status](https://travis-ci.org/EqualExpertsMicroDC/ee-microdc-init.svg)](https://travis-ci.org/EqualExpertsMicroDC/ee-microdc-init)
+[![Build Status](https://travis-ci.org/microdc/microdc-init.svg)](https://travis-ci.org/microdc/microdc-init)
 
 # ee-microdc-init
 A python package to manage a pick 'n' mix Kubernetes infrastructure on AWS
 
 ### Install
-`pip install git+https://github.com/EqualExpertsMicroDC/ee-microdc-init`
+`pip install git+https://github.com/microdc/microdc-init`
 
 #### or run with docker
 ```
@@ -25,7 +25,7 @@ This will bring up kubernetes clusters in AWS accounts.  In this example we will
 ### Meet the prerequisites
  * Two accounts with AWS - prod and nonprod (you can also go with one)
  * Delegate a domain or sub domain
- * Generate a domain certificate from ACM and save the arn for use in the config file below - [howto](https://github.com/EqualExpertsMicroDC/ee-microdc-init/blob/master/docs/configure_acm_cert.md)
+ * Generate a domain certificate from ACM and save the arn for use in the config file below - [howto](https://github.com/microdc/microdc-init/blob/master/docs/configure_acm_cert.md)
  * We have found raising the following AWS limits helpful (based on a environment setup of dev, test, stage, prod) :
    - Raise the Ec2 instance limit to 100
    - Increase elastic IPs to 20
@@ -40,7 +40,7 @@ This will bring up kubernetes clusters in AWS accounts.  In this example we will
 
 1. First we setup our environment
 
-   Using the [test config](https://github.com/EqualExpertsMicroDC/ee-microdc-init/blob/master/tests/good_config.yaml) as a template, fill out the relevant details.
+   Using the [test config](https://github.com/microdc/microdc-init/blob/master/tests/good_config.yaml) as a template, fill out the relevant details.
    ```
    microdc --workdir ~/.microdc --config config.yaml --setup up
    ```
@@ -78,4 +78,4 @@ microdc --workdir ~/.microdc --config config.yml --account nonprod --tool kubect
 ```
 
 ### Extras - create developer and deployment users for the apps namespace
-https://github.com/EqualExpertsMicroDC/apps-namespace
+https://github.com/microdc/apps-namespace
