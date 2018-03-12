@@ -6,12 +6,6 @@ A python package to manage a pick 'n' mix Kubernetes infrastructure on AWS
 ### Install
 `pip install git+https://github.com/microdc/microdc-init`
 
-#### or run with docker
-```
-docker build -t microdc .
-docker run microdc microdc --help
-```
-
 ### Usage
 `microdc --help`
 
