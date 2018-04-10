@@ -36,8 +36,8 @@ This will bring up kubernetes clusters in AWS accounts.  In this example we will
 
    Using the [test config](https://github.com/microdc/microdc-init/blob/master/tests/good_config.yaml) as a template, fill out the relevant details.
    ```
-   microdc --workdir ~/.microdc --config config.yaml --setup up
-   microdc --workdir ~/.microdc --config config.yaml --setup up | sh
+   microdc --workdir ~/.microdc --config config.yml --setup up
+   microdc --workdir ~/.microdc --config config.yml --setup up | sh
    ```
 
 2. We run the global setup (GLOBAL terraform)
