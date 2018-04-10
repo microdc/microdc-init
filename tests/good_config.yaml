@@ -27,7 +27,6 @@ accounts:
     domain: prod.test.com
     sslcertificate: arn:aws:acm:eu-west-1:565656565656:certificate/56c56eb2-5656-4c56-56dd-d5b9a56d5656
     region: eu-west-1
-    domain: prod.test.com
     environments:
       prod:
         stack: service

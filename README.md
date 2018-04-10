@@ -24,7 +24,7 @@ This will bring up kubernetes clusters in AWS accounts.  In this example we will
    - Raise the Ec2 instance limit to 100
    - Increase elastic IPs to 20
    - Raise the VPC limit to 20
- * Install terraform - Download the relevant binary for your operating system [here](https://www.terraform.io/downloads.html)
+ * Install terraform - Download the relevant binary for your operating system [here](https://www.terraform.io/downloads.html). Currently 0.10.8.
  * Install kops - Download the relevant binary for your operating system [here](https://github.com/kubernetes/kops/releases/tag/1.8.0)
  * Install kubectl - Follow [these](https://kubernetes.io/docs/tasks/tools/install-kubectl/#install-kubectl-binary-via-curl) steps
  * Install AWS CLI - Instruction [here](https://docs.aws.amazon.com/cli/latest/userguide/installing.html)
@@ -37,6 +37,7 @@ This will bring up kubernetes clusters in AWS accounts.  In this example we will
    Using the [test config](https://github.com/microdc/microdc-init/blob/master/tests/good_config.yaml) as a template, fill out the relevant details.
    ```
    microdc --workdir ~/.microdc --config config.yaml --setup up
+   microdc --workdir ~/.microdc --config config.yaml --setup up | sh
    ```
 
 2. We run the global setup (GLOBAL terraform)
@@ -65,7 +66,7 @@ export AWS_PROFILE=test-nonprod
 export KOPS_STATE_STOR=s3://test-nonprod-kops
 kops validate cluster
 ```
-6. Deploy kubernets level components - telemetry etc
+6. Deploy kubernetes level components - telemetry etc
 ```
 microdc --workdir ~/.microdc --config config.yml --account nonprod --tool kubectl up --env dev
 microdc --workdir ~/.microdc --config config.yml --account nonprod --tool kubectl up --env dev | sh
