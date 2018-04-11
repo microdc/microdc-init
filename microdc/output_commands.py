@@ -217,7 +217,10 @@ def get_k8s_cluster_elb(environment):
     print("\n".join(['export  K8S_API_ELB=$(\\',
                      'aws elb describe-load-balancers \\',
                      '        --query \\',
-                     '\'LoadBalancerDescriptions[?starts_with(LoadBalancerName, `api-{environment}-`) == `true`].[DNSName]\' --output text)'])  # noqa: E501
+                     '\'LoadBalancerDescriptions[?starts_with(LoadBalancerName, `api-{environment}-`) == `true`].[DNSName]\' --output text)',  # noqa: E501
+                     'if [[ -z $K8S_API_ELB ]] ; then echo \'ERROR: No Load-Balancer found. Did Kops complete correctly?\' 2>&1',  # noqa: E501
+                     'exit 1 ; fi'
+                     ])
           .format(environment=environment))
     return True
 
@@ -306,7 +309,8 @@ def run_kops(config, options):
                "{cluster_config_yaml}\n"
                "EOF\n\n"
                "kops create -f {cluster_config_file}\n\n"
-               "ssh-keygen -t rsa -b 4096 -P '' -C MicroDC -f {cluster_rsa_key}\n\n"
+               "ssh-keygen -t rsa -b 4096 -P '' -C MicroDC -f {cluster_rsa_key} "
+               "|| echo '\\nERROR: ssh key already exists. It must be removed.' 2>&1 ; exit 1\n\n"
                "kops create secret --name {cluster} sshpublickey admin -i {cluster_rsa_key}.pub\n\n"
                .format(cluster=cluster,
                        cluster_config_file=cluster_config_file,

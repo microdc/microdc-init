@@ -59,6 +59,8 @@ microdc --workdir ~/.microdc --config config.yml --account nonprod --stack servi
 ```
 
 5. Validate our setup.
+ Update the NS records if using a delegated Route 53 DNS subdomain.
+ The (super) DNS domain should be updated to use the NS servers of the new, terraform-created, subdomain.
 ```
 # Copy these from the output of the kops command above
 export AWS_DEFAULT_REGION=eu-west-1
