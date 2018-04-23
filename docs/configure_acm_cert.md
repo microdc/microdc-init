@@ -8,3 +8,11 @@ In our case:
 *.microdc.equalexperts.io
 ```
 
+For example on a client site:
+```
+*.dev.example.com
+*.mgmt.example.com
+*.stage.example.com
+*.prod.example.com
+```
+
