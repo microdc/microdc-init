@@ -32,7 +32,6 @@ accounts:
         stack: service
         network_offset: 10
 
-
 component_repos:
   terraform:
     git: git@github.com:microdc/terraform-stacks.git
@@ -40,3 +39,11 @@ component_repos:
   k8s-service-stack-full:
     git: git@github.com:microdc:k8s-service-stack-full.git
     ref: master
+
+kubectl_modules:  # Each module is a directory in k8s-service-stack-full that we want to apply
+  - { name: apps-namespace, envsubst: false }
+  - { name: efk, envsubst: false }
+  - { name: kube-ingress, envsubst: false }
+  - { name: kube2iam, envsubst: false }
+  - { name: metrics, envsubst: false }
+  - { name: ssl-ingress, envsubst: true }
