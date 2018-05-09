@@ -38,6 +38,13 @@ def setup_environment(config, options):
 
 def run_kubectl(config, options):
 
+    try:
+        modules = config["kubectl_modules"]
+    except KeyError:
+        print("ERROR: No kubectl_modules specified in config yaml. "
+              "These are required for kubectl to apply config on your k8s cluster")
+        return
+
     if options.env not in list(config['accounts'][options.account]['environments'].keys()):
         raise ValueError("Env needs to be one of {}"
                          .format(list(config['accounts'][options.account]['environments'].keys())))
@@ -56,17 +63,24 @@ def run_kubectl(config, options):
                   domain=domain,
                   acm_cert=acm_cert))
 
-    print("\n".join(['(\ncd {component_dir}/kubectl && \\',
-                     'while true; do if kubectl apply -Rf .; then break; fi; done\n)',
-                     '(\ncd {component_dir}/kubectl-incomplete && \\',
-                     'for file in $(find . -name "*.yaml"); do cat ${{file}} | envsubst | kubectl apply -f - ; done',
-                     ')'])
-          .format(component_dir=component_dir))
+    for module in modules:
+
+        kubectl_apply_command = \
+            'for file in $(find . -name "*.yaml"); do cat ${{file}} ' \
+            '| envsubst | kubectl apply -f - ; done\n)' \
+            if module.get("envsubst", False) else \
+            'while true; do if kubectl apply -Rf .; then break; fi; done\n)'
+
+        print("\n".join(['(\ncd {component_dir}/{module_name} && \\',
+                         kubectl_apply_command,
+                         ])
+              .format(component_dir=component_dir, module_name=module["name"]))
+
     return True
 
 
 def run_terraform(config, options):
-    print(("export TF_PLUGIN_CACHE_DIR=\"/tmp/terraform.d/plugin-cache\""))
+    print("export TF_PLUGIN_CACHE_DIR=\"/tmp/terraform.d/plugin-cache\"")
 
     if options.action == "up":
         action = 'apply'
