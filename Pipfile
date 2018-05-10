@@ -1,0 +1,16 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+PyYAML = "==3.12"
+"Jinja2" = "==2.10"
+
+[dev-packages]
+pytest = "==3.2.5"
+"flake8" = "==3.5.0"
+mock = "==2.0.0"
+
+[requires]
+python_version = "3.6"

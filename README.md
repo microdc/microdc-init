@@ -7,28 +7,48 @@ A python package to manage a pick 'n' mix Kubernetes infrastructure on AWS
 Requirements:
 
 * Python 3.x (ideally 3.6.x). It may work with python 2.7.x but that is not tested at present.
+* [pip](https://pip.pypa.io/en/stable/) https://pip.pypa.io/en/stable/ 
 
 Recommended utilities:
 
-* [virtualenv](https://virtualenv.pypa.io/en/stable/) https://virtualenv.pypa.io/en/stable/ which ensures you avoid conflicts with system python packages.
+* [pipenv](https://docs.pipenv.org) https://docs.pipenv.org which allows deterministic builds of pythona pps.
 
-If installing within a virtualenv create the virtualenv (only once) and activate it
-
-`virtualenv -p <path to python 3> <name of virtualenv>` only once, doing again will simply inform the user that the virtualenv already exists.
-
-`source <name of virtualenv>/bin/activate`
+If using `pipenv` which is strongly encouraged.
+```bash
+mkdir <destination dir>
+cd <destination dir>
+pipenv --python 3.6
+pipenv shell
+```
 
 Install the package
+```bash
+pip install git+https://github.com/microdc/microdc-init
+```
 
-`pip install git+https://github.com/microdc/microdc-init`
+If using pipenv the previous command install the package and all dependencies into the environment created and activated in the pipenv specific instructions. When done running your command you can simply exit out of the `pipenv` environment for this util.
+```bash
+exit
+```
+
+Which will take you back to your shell.
 
 ### Usage
-`microdc --help`
+```bash
+microdc --help
+```
 
-### Tests
-Running the tests with the following script requires `virtualenv`
+## Development
+Contributions are very welcome. If you want to help improve `microdc-init` you'll need to:
 
-`$ ./test.sh`
+1. Install [pipenv](https://docs.pipenv.org) https://docs.pipenv.org
+1. Install all requirements (including development requirements) `pipenv install -d`
+
+### Running Tests
+Running the tests with the following script requires `pipenv`. All required dependencies etc. will be installed before the tests are run.
+```bash
+./test.sh
+```
 
 ## Bring up a MicroDC environment
 This will bring up kubernetes clusters in AWS accounts.  In this example we will spin up a single cluster called dev.
@@ -52,25 +72,25 @@ This will bring up kubernetes clusters in AWS accounts.  In this example we will
 1. First we setup our environment
 
    Using the [test config](https://github.com/microdc/microdc-init/blob/master/tests/good_config.yaml) as a template, fill out the relevant details.
-   ```
+   ```bash
    microdc --workdir ~/.microdc --config config.yml --setup up
    microdc --workdir ~/.microdc --config config.yml --setup up | sh
    ```
 
 2. We run the global setup (GLOBAL terraform)
-```
+```bash
 microdc --workdir ~/.microdc --config config.yml --account nonprod --stack global --tool terraform up --bootstrap
 microdc --workdir ~/.microdc --config config.yml --account nonprod --stack global --tool terraform up --bootstrap | sh
 ```
 
 3. Initial cluster setup
-```
+```bash
 microdc --workdir ~/.microdc --config config.yml --account nonprod --tool kops up --env dev
 microdc --workdir ~/.microdc --config config.yml --account nonprod --tool kops up --env dev | sh
 ```
 
 4. Complete setup around the edges. (SERVICE Stack - this is per env)
-```
+```bash
 microdc --workdir ~/.microdc --config config.yml --account nonprod --stack service --tool terraform up --env dev
 microdc --workdir ~/.microdc --config config.yml --account nonprod --stack service --tool terraform up --env dev | sh
 ```
@@ -78,7 +98,7 @@ microdc --workdir ~/.microdc --config config.yml --account nonprod --stack servi
 5. Validate our setup.
  Update the NS records if using a delegated Route 53 DNS subdomain.
  The (super) DNS domain should be updated to use the NS servers of the new, terraform-created, subdomain.
-```
+```bash
 # Copy these from the output of the kops command above
 export AWS_DEFAULT_REGION=eu-west-1
 export AWS_PROFILE=test-nonprod
@@ -86,7 +106,7 @@ export KOPS_STATE_STOR=s3://test-nonprod-kops
 kops validate cluster
 ```
 6. Deploy kubernetes level components - telemetry etc
-```
+```bash
 microdc --workdir ~/.microdc --config config.yml --account nonprod --tool kubectl up --env dev
 microdc --workdir ~/.microdc --config config.yml --account nonprod --tool kubectl up --env dev | sh
 ```

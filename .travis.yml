@@ -3,4 +3,13 @@ language: python
 python:
   - "3.6"
 
-script: ./test.sh
+env:
+  global:
+    - PIPENV_VENV_IN_PROJECT=1
+    - PIPENV_IGNORE_VIRTUALENVS=1
+
+install:
+  - pip install pipenv
+
+script:
+  - ./test.sh
