@@ -17,10 +17,10 @@ pip install -q -r requirements.txt -r requirements-tests.txt
 echo "Cleaning .pyc files..."
 find . -iname "*.pyc" -delete
 
+echo "Running flake8 to check python style..."
+flake8 --ignore=F401 microdc/ tests/
+
 echo "Running tests..."
 python -m pytest tests/
-
-echo "Running flake8..."
-flake8 --ignore=F401 microdc/ tests/
 
 echo "Done!!"
