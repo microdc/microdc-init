@@ -26,7 +26,7 @@ Install the package
 pip install git+https://github.com/microdc/microdc-init
 ```
 
-If using pipenv the previous command install the package and all dependencies into the environment created and activated in the pipenv specific instructions. When done running your command you can simply exit out of the `pipenv` environment for this util.
+If using pipenv the above command will install the package and all dependencies into the environment created and activated in the pipenv specific instructions. When done running your command you can simply exit out of the `pipenv` environment for this util.
 ```bash
 exit
 ```
