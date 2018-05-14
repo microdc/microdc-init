@@ -11,6 +11,14 @@ spec:
     rbac: {}
   channel: stable
   cloudProvider: aws
+  docker:
+    logLevel: warn
+    logOpt:
+      - max-size=10m
+      - max-file=5
+    storage: overlay,aufs
+    logDriver: json-file
+    version: 17.09.0
   configBase: {{ state_store}}/{{ cluster }}
   etcdClusters:
   - etcdMembers:
