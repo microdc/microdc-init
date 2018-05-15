@@ -57,7 +57,7 @@ def run_kubectl(config, options):
 
     print("\n".join(['export ENVIRONMENT_DOMAIN={environment}.{domain}',
                      'export LB_DNS_NAME=ingress.{environment}.{domain}',
-                     'export INTERNAL_LB_DNS_NAME=ingress.internal.{environment}{domain}',
+                     'export INTERNAL_LB_DNS_NAME=ingress.internal.{environment}.{domain}',
                      'export ACM_CERT_ARN={acm_cert}\n'])
           .format(environment=environment,
                   domain=domain,
