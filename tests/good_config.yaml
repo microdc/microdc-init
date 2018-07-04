@@ -37,7 +37,7 @@ component_repos:
     git: git@github.com:microdc/terraform-stacks.git
     ref: master
   k8s-service-stack-full:
-    git: git@github.com:microdc:k8s-service-stack-full.git
+    git: git@github.com:microdc/k8s-service-stack-full.git
     ref: master
 
 kubectl_modules:  # Each module is a directory in k8s-service-stack-full that we want to apply
